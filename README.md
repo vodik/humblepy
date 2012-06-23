@@ -43,7 +43,7 @@ voxatron="foobar"
     Enable running as root for system-wide installs. *NOT RECOMMENDED*
 ```
 
-##Copyright
+## Copyright
 
 ```
 Permission is hereby granted, free of charge, to any person obtaining a
