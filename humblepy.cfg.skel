@@ -1,0 +1,17 @@
+[settings]
+targets = linux
+
+[keys]
+# 1 = KEY
+# 2 = KEY
+# 3 = KEY
+# 4 = KEY
+# 5 = KEY
+# android1      = KEY
+# android2      = KEY
+# botanicula    = KEY
+# frozenbyte    = KEY
+# frozensynapse = KEY
+# introversion  = KEY
+# mojang        = KEY
+# voxatron      = KEY

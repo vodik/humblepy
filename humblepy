@@ -8,16 +8,12 @@ License: GPL3
 
 import getopt
 import sys, os
+import configparser
 
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 
 Targets = ["linux", "mac", "windows", "android", "audio"]
-
-# import configparser
-
-# config = configparser.ConfigParser()
-# config.read('example.cfg')
 
 class Download():
     def __init__(self, bt, web, md5):
@@ -93,9 +89,18 @@ def main():
     verbose = False
     targets = Targets
 
+    config = configparser.ConfigParser()
+    config.read('humblepy.cfg')
+
+    if 'settings' in config:
+        targets = config['settings']['targets'].split(',')
+
     for o, a in opts:
         if o in ("-b", "--bundle"):
-            print("Loading bundle", a)
+            if 'keys' in config and a in config['keys']:
+                keys.append(config['keys'][a])
+            else:
+                print("Bundle {} not found".format(a), file=sys.stderr)
         elif o in ("-t", "--target"):
             # TODO: verify targets
             targets = a.split(",")
