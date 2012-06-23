@@ -1,0 +1,93 @@
+#!/usr/bin/python3
+
+import getopt
+import sys, os
+
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+
+Targets = ["linux", "mac", "windows", "android", "audio"]
+
+# import configparser
+
+# config = configparser.ConfigParser()
+# config.read('example.cfg')
+
+class Game():
+    def __init__(self):
+        pass
+
+class HumbleBundle():
+    def __init__(self, key, targets):
+        url = "https://www.humblebundle.com/downloads?key={0}".format(key)
+        print("Opening:", url)
+        html = urlopen(url)
+
+        soup = BeautifulSoup(html.read())
+        for row in soup.find_all("div", { "class" : "row" }):
+            self.parse_row(row, targets)
+
+    def parse_row(self, row, targets):
+        _title = row.find("div", { "class" : "title" }).contents[0]
+        url = _title['href']
+        title = _title.contents[0]
+        subtitle = row.find("div", { "class" : "subtitle" }).contents[0].contents[0]
+        print("Title:      ", title)
+        print("Subtitle:   ", subtitle)
+        print("URL:        ", url)
+        print()
+
+        for target in targets:
+            print("TARGET:", target)
+
+            downloads = row.find("div", { "class" : target })
+            for dl in downloads.find_all('a'):
+                if 'data-bt' in dl.attrs:
+                    print("Torrent:   ", dl['data-bt'])
+                if 'data-web' in dl.attrs:
+                    print("Download:  ", dl['data-web'])
+                if 'dlmd5' in dl['class']:
+                    print("MD5:       ", dl['href'])
+            print()
+        print()
+
+def usage():
+    pass
+
+def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "b:t:f:v", ["bundle=", "target=", "file=", "key=", "verbose", "as-root"])
+    except getopt.GetoptError as err:
+        print(err, file=sys.stderr)
+        usage()
+        sys.exit(2)
+
+    root = False
+    verbose = False
+    targets = Targets
+
+    for o, a in opts:
+        if o in ("-b", "--bundle"):
+            print("Loading bundle", a)
+        elif o in ("-t", "--target"):
+            # TODO: verify targets
+            targets = a.split(",")
+        elif o in ("-k", "--key"):
+            key = a
+        elif o in ("-v", "--verbose"):
+            verbose = True
+        elif o == "--as-root":
+            root = True
+        else:
+            assert False, "unhandled option"
+
+    if not root and os.geteuid() == 0:
+        print("Running as root requires --as-root", file=sys.stderr)
+        sys.exit(1)
+
+    bundle = HumbleBundle(key, targets)
+    # for link in parser.links:
+    #     print(link)
+
+if __name__ == "__main__":
+    main()
