@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 import getopt
 import sys, os
@@ -13,43 +13,57 @@ Targets = ["linux", "mac", "windows", "android", "audio"]
 # config = configparser.ConfigParser()
 # config.read('example.cfg')
 
+class Download():
+    def __init__(self, bt, web, md5):
+        self.bt  = bt
+        self.web = web
+        self.md5 = md5
+
 class Game():
-    def __init__(self):
-        pass
+    def __init__(self, title, sub, url):
+        self.title = title
+        self.subtitle = sub
+        self.url = url
+        self.files = {}
 
 class HumbleBundle():
-    def __init__(self, key, targets):
+    def __init__(self, key):
         url = "https://www.humblebundle.com/downloads?key={0}".format(key)
         print("Opening:", url)
         html = urlopen(url)
 
+        self.games = []
+
         soup = BeautifulSoup(html.read())
         for row in soup.find_all("div", { "class" : "row" }):
-            self.parse_row(row, targets)
+            game = self.parse_game(row)
+            # self.games[name] = game
+            self.games.append(game)
 
-    def parse_row(self, row, targets):
-        _title = row.find("div", { "class" : "title" }).contents[0]
-        url = _title['href']
-        title = _title.contents[0]
-        subtitle = row.find("div", { "class" : "subtitle" }).contents[0].contents[0]
-        print("Title:      ", title)
-        print("Subtitle:   ", subtitle)
-        print("URL:        ", url)
-        print()
+    def parse_game(self, row):
+        a     = row.find("div", { "class" : "title" }).contents[0]
+        title = a.contents[0]
+        url   = a['href']
+        sub   = row.find("div", { "class" : "subtitle" }).contents[0].contents[0]
+        game  = Game(title, sub, url)
 
-        for target in targets:
-            print("TARGET:", target)
-
+        for target in Targets:
+            files = []
             downloads = row.find("div", { "class" : target })
             for dl in downloads.find_all('a'):
+                bt, web = None, None
                 if 'data-bt' in dl.attrs:
-                    print("Torrent:   ", dl['data-bt'])
+                    bt = dl['data-bt']
                 if 'data-web' in dl.attrs:
-                    print("Download:  ", dl['data-web'])
-                if 'dlmd5' in dl['class']:
-                    print("MD5:       ", dl['href'])
-            print()
-        print()
+                    web = dl['data-web']
+                if bt or web:
+                    files.append(Download(bt, web, None))
+
+                # if 'dlmd5' in dl['class']:
+                #     print("MD5:       ", dl['href'])
+            game.files[target] = files
+
+        return game
 
 def usage():
     pass
@@ -85,9 +99,19 @@ def main():
         print("Running as root requires --as-root", file=sys.stderr)
         sys.exit(1)
 
-    bundle = HumbleBundle(key, targets)
+    bundle = HumbleBundle(key)
     # for link in parser.links:
     #     print(link)
+
+    for g in bundle.games:
+        print(g.title)
+        print(g.url)
+        print()
+
+        for t in targets:
+            for f in g.files[t]:
+                print(f.bt)
+        print()
 
 if __name__ == "__main__":
     main()
